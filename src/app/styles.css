@@ -271,6 +271,26 @@ h1 {
 	border: 1px solid var(--border);
 }
 
+.plot-panel:fullscreen {
+	margin-top: 0;
+	width: 100vw;
+	height: 100vh;
+	border-radius: 0;
+	border: none;
+	background: #ffffff;
+}
+
+.plot-panel:fullscreen .card-content {
+	height: 100%;
+	display: grid;
+	grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.plot-panel:fullscreen .plot-wrap {
+	min-height: 0;
+	height: 100%;
+}
+
 table {
 	width: 100%;
 	border-collapse: collapse;

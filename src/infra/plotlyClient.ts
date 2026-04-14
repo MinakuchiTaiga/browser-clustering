@@ -68,6 +68,31 @@ export function getPlotlyBundleContent(): string {
 }
 
 /**
+ * Plotly本体を埋め込んだ単一HTML文字列を生成する。
+ */
+export function buildSelfContainedHtmlContent(
+	title: string,
+	traces: PlotTrace[],
+	layout: PlotLayout,
+): string {
+	const renderScript = buildInteractiveScriptContent(traces, layout);
+	return `<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>${escapeHtml(title)}</title>
+  <style>body{margin:0;font-family:sans-serif}#plot{width:100vw;height:100vh}</style>
+</head>
+<body>
+  <div id="plot"></div>
+  <script>${escapeScriptTag(plotlyBundleText)}</script>
+  <script>${escapeScriptTag(renderScript)}</script>
+</body>
+</html>`;
+}
+
+/**
  * HTML用に文字列をエスケープする。
  */
 export function escapeHtml(value: string): string {
@@ -77,4 +102,11 @@ export function escapeHtml(value: string): string {
 		.replaceAll(">", "&gt;")
 		.replaceAll('"', "&quot;")
 		.replaceAll("'", "&#39;");
+}
+
+/**
+ * scriptタグ内に安全に埋め込むための最小エスケープを行う。
+ */
+function escapeScriptTag(value: string): string {
+	return value.replaceAll("</script>", "<\\/script>");
 }

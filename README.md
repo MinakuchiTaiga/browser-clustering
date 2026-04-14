@@ -5,7 +5,7 @@
 - 実装スタック: `TypeScript` + `React` + `Vite` + `Biome` + `Vitest` + `shadcn/ui`(最小構成)
 - 可視化: `Plotly.js`
 - 前処理: `z-score`（ON/OFF可）+ 任意の事前PCA
-- 出力: `PNG` / `SVG` / `HTML + JS（オフライン閲覧用）` / `CSV`
+- 出力: `PNG` / `SVG` / `HTML + JS（オフライン閲覧用）` / `JS同梱単一HTML` / `CSV`
 - 大規模データ実行時: 進捗率表示 + ローディングアニメーション
 - 入力支援: CSV/TSV入力形式ガイド（モーダル）+ 各項目説明ツールチップ
 
@@ -67,6 +67,9 @@ pnpm audit:offline
   - `plot-data.js`
   - `plotly.min.js`
   - 3ファイルを同じフォルダに置くと単体表示可能
+- インタラクティブ（ポータブル）: `JS同梱単一HTML`
+  - `clustering-result-standalone.html`
+  - 1ファイルのみでオフライン単体表示可能
 - 表形式CSV: `元データ列 + cluster_id + cluster_label`
 
 ## ガードレール

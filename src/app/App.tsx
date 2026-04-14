@@ -15,6 +15,7 @@ import type { PlotLayout, PlotTrace } from "@/infra/plotlyClient";
 import {
 	buildInteractiveHtmlContent,
 	buildInteractiveScriptContent,
+	buildSelfContainedHtmlContent,
 	exportPlotAsImageDataUrl,
 	getPlotlyBundleContent,
 	renderPlot,
@@ -42,8 +43,10 @@ export function App(): ReactElement {
 	const [progress, setProgress] = useState<number>(0);
 	const [progressMessage, setProgressMessage] = useState<string>("");
 	const [isInputGuideOpen, setIsInputGuideOpen] = useState<boolean>(false);
+	const [isPlotFullscreen, setIsPlotFullscreen] = useState<boolean>(false);
 
 	const plotRef = useRef<HTMLDivElement>(null);
+	const plotPanelRef = useRef<HTMLElement>(null);
 
 	const plotModel = useMemo(() => {
 		if (!result) {
@@ -58,6 +61,21 @@ export function App(): ReactElement {
 		}
 		void renderPlot(plotRef.current, plotModel.traces, plotModel.layout);
 	}, [plotModel]);
+
+	useEffect(() => {
+		/**
+		 * 全画面状態の変化を監視して表示ラベルを同期する。
+		 */
+		function handleFullscreenChange(): void {
+			const panel = plotPanelRef.current;
+			setIsPlotFullscreen(document.fullscreenElement === panel);
+		}
+
+		document.addEventListener("fullscreenchange", handleFullscreenChange);
+		return () => {
+			document.removeEventListener("fullscreenchange", handleFullscreenChange);
+		};
+	}, []);
 
 	/**
 	 * ファイル入力を読み込んでテキスト化する。
@@ -162,6 +180,24 @@ export function App(): ReactElement {
 	}
 
 	/**
+	 * Plotly本体を含む単一HTMLを出力する。
+	 */
+	function exportSelfContainedHtml(): void {
+		if (!plotModel) {
+			return;
+		}
+		const html = buildSelfContainedHtmlContent(
+			"browser-clustering result",
+			plotModel.traces,
+			plotModel.layout,
+		);
+		downloadBlob(
+			new Blob([html], { type: "text/html;charset=utf-8" }),
+			"clustering-result-standalone.html",
+		);
+	}
+
+	/**
 	 * クラスタ結果をCSVとして出力する。
 	 */
 	function exportCsvFile(): void {
@@ -175,6 +211,21 @@ export function App(): ReactElement {
 		);
 		const csv = toCsv(records);
 		downloadBlob(new Blob([csv], { type: "text/csv;charset=utf-8" }), "clustering-result.csv");
+	}
+
+	/**
+	 * 可視化パネルの全画面表示を切り替える。
+	 */
+	async function togglePlotFullscreen(): Promise<void> {
+		const panel = plotPanelRef.current;
+		if (!panel) {
+			return;
+		}
+		if (document.fullscreenElement === panel) {
+			await document.exitFullscreen();
+			return;
+		}
+		await panel.requestFullscreen();
 	}
 
 	return (
@@ -351,11 +402,18 @@ export function App(): ReactElement {
 				</Card>
 			</div>
 
-			<section className="card" style={{ marginTop: 16 }}>
+			<section ref={plotPanelRef} className="card plot-panel" style={{ marginTop: 16 }}>
 				<div className="card-content">
 					<CardTitle>可視化</CardTitle>
 					<div ref={plotRef} className="plot-wrap" />
 					<div className="inline">
+						<Button
+							variant="secondary"
+							onClick={() => void togglePlotFullscreen()}
+							disabled={isRunning}
+						>
+							{isPlotFullscreen ? "全画面解除" : "全画面表示"}
+						</Button>
 						<Button
 							variant="secondary"
 							onClick={() => void exportImage("png")}
@@ -376,6 +434,13 @@ export function App(): ReactElement {
 							disabled={!result || isRunning}
 						>
 							HTML+JS出力
+						</Button>
+						<Button
+							variant="secondary"
+							onClick={exportSelfContainedHtml}
+							disabled={!result || isRunning}
+						>
+							JS同梱HTML出力
 						</Button>
 						<Button variant="secondary" onClick={exportCsvFile} disabled={!result || isRunning}>
 							CSV出力

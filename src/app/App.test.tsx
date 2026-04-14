@@ -28,6 +28,20 @@ import { App } from "@/app/App";
  * Appの結合動作を検証する。
  */
 describe("App integration", () => {
+	it("可視化パネルの全画面表示を切り替えられる", async () => {
+		const user = userEvent.setup();
+		const requestFullscreenMock = vi.fn(async () => {});
+		Object.defineProperty(HTMLElement.prototype, "requestFullscreen", {
+			configurable: true,
+			value: requestFullscreenMock,
+		});
+
+		render(<App />);
+		await user.click(screen.getByRole("button", { name: "全画面表示" }));
+
+		expect(requestFullscreenMock).toHaveBeenCalled();
+	});
+
 	it("ファイル読込から実行、ラベル編集、CSV出力まで実行できる", async () => {
 		const user = userEvent.setup();
 		render(<App />);
