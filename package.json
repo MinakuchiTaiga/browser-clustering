@@ -1,0 +1,43 @@
+{
+	"name": "browser-clustering",
+	"private": true,
+	"version": "0.1.0",
+	"type": "module",
+	"scripts": {
+		"dev": "vite",
+		"build": "tsc -b && vite build",
+		"preview": "vite preview",
+		"test": "vitest run",
+		"test:watch": "vitest",
+		"lint": "biome check .",
+		"format": "biome format --write .",
+		"audit:offline": "node scripts/audit-offline.mjs"
+	},
+	"dependencies": {
+		"@radix-ui/react-label": "^2.1.7",
+		"@radix-ui/react-slot": "^1.2.3",
+		"class-variance-authority": "^0.7.1",
+		"clsx": "^2.1.1",
+		"lucide-react": "^0.542.0",
+		"ml-kmeans": "^6.0.0",
+		"ml-pca": "^4.1.1",
+		"plotly.js-dist-min": "^3.1.0",
+		"react": "^19.1.1",
+		"react-dom": "^19.1.1",
+		"tailwind-merge": "^3.3.1"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.2.4",
+		"@testing-library/jest-dom": "^6.8.0",
+		"@testing-library/react": "^16.3.0",
+		"@testing-library/user-event": "^14.6.1",
+		"@types/node": "^24.3.0",
+		"@types/react": "^19.1.10",
+		"@types/react-dom": "^19.1.7",
+		"@vitejs/plugin-react": "^5.0.0",
+		"jsdom": "^26.1.0",
+		"typescript": "~5.8.3",
+		"vite": "^7.1.2",
+		"vitest": "^3.2.4"
+	}
+}
