@@ -18,8 +18,16 @@ export type CandidateProgress = {
  * ElbowとSilhouetteの候補スコアを計算して返す。
  */
 export function computeCandidates(matrix: number[][], config: CandidateConfig): CandidateScores {
-	const maxK = Math.min(config.maxK ?? 8, Math.max(matrix.length - 1, 2));
 	const minK = Math.max(config.minK ?? 2, 2);
+	const maxK = Math.min(config.maxK ?? 8, matrix.length - 1);
+	if (maxK < minK) {
+		return {
+			elbow: [],
+			silhouette: [],
+			recommendedByElbow: null,
+			recommendedBySilhouette: null,
+		};
+	}
 	const elbow: CandidateScores["elbow"] = [];
 	const silhouette: CandidateScores["silhouette"] = [];
 
@@ -52,8 +60,16 @@ export async function computeCandidatesAsync(
 	config: CandidateConfig,
 	onProgress?: (progress: CandidateProgress) => void,
 ): Promise<CandidateScores> {
-	const maxK = Math.min(config.maxK ?? 8, Math.max(matrix.length - 1, 2));
 	const minK = Math.max(config.minK ?? 2, 2);
+	const maxK = Math.min(config.maxK ?? 8, matrix.length - 1);
+	if (maxK < minK) {
+		return {
+			elbow: [],
+			silhouette: [],
+			recommendedByElbow: null,
+			recommendedBySilhouette: null,
+		};
+	}
 	const elbow: CandidateScores["elbow"] = [];
 	const silhouette: CandidateScores["silhouette"] = [];
 	const total = maxK - minK + 1;
@@ -94,6 +110,9 @@ export function calculateAverageSilhouette(matrix: number[][], clusters: number[
 	const scores = matrix.map((row, index) => {
 		const clusterId = clusters[index];
 		const sameCluster = byCluster.get(clusterId) ?? [];
+		if (sameCluster.length <= 1) {
+			return 0;
+		}
 
 		let a = 0;
 		if (sameCluster.length > 1) {
@@ -150,9 +169,9 @@ export function groupIndicesByCluster(clusters: number[]): Map<number, number[]>
 /**
  * Elbow法の慣性曲線から推奨kを返す。
  */
-export function recommendByElbow(points: Array<{ k: number; inertia: number }>): number {
+export function recommendByElbow(points: Array<{ k: number; inertia: number }>): number | null {
 	if (points.length <= 2) {
-		return points[0]?.k ?? 2;
+		return points[0]?.k ?? null;
 	}
 
 	const first = points[0];
@@ -185,9 +204,9 @@ export function recommendByElbow(points: Array<{ k: number; inertia: number }>):
 /**
  * Silhouetteスコア配列から推奨kを返す。
  */
-export function recommendBySilhouette(points: Array<{ k: number; score: number }>): number {
+export function recommendBySilhouette(points: Array<{ k: number; score: number }>): number | null {
 	if (points.length === 0) {
-		return 2;
+		return null;
 	}
 	return points.reduce((best, current) => (current.score > best.score ? current : best)).k;
 }

@@ -160,13 +160,13 @@ export function App(): ReactElement {
 	/**
 	 * インタラクティブHTML用のファイル群を出力する。
 	 */
-	function exportInteractiveBundle(): void {
+	async function exportInteractiveBundle(): Promise<void> {
 		if (!plotModel) {
 			return;
 		}
 		const html = buildInteractiveHtmlContent("browser-clustering result");
 		const dataScript = buildInteractiveScriptContent(plotModel.traces, plotModel.layout);
-		const plotlyBundle = getPlotlyBundleContent();
+		const plotlyBundle = await getPlotlyBundleContent();
 
 		downloadBlob(new Blob([html], { type: "text/html;charset=utf-8" }), "clustering-result.html");
 		downloadBlob(
@@ -182,11 +182,11 @@ export function App(): ReactElement {
 	/**
 	 * Plotly本体を含む単一HTMLを出力する。
 	 */
-	function exportSelfContainedHtml(): void {
+	async function exportSelfContainedHtml(): Promise<void> {
 		if (!plotModel) {
 			return;
 		}
-		const html = buildSelfContainedHtmlContent(
+		const html = await buildSelfContainedHtmlContent(
 			"browser-clustering result",
 			plotModel.traces,
 			plotModel.layout,
@@ -392,14 +392,15 @@ export function App(): ReactElement {
 										{result.parseResult.excludedRows.map((row) => row.lineNumber).join(", ")}
 									</small>
 								)}
-								<small>
-									候補k（Elbow/Silhouette）: {result.candidates.recommendedByElbow} /{" "}
-									{result.candidates.recommendedBySilhouette}
-								</small>
-							</>
-						)}
-					</CardContent>
-				</Card>
+									<small>
+										候補k（Elbow/Silhouette）:{" "}
+										{formatRecommendedK(result.candidates.recommendedByElbow)} /{" "}
+										{formatRecommendedK(result.candidates.recommendedBySilhouette)}
+									</small>
+								</>
+							)}
+						</CardContent>
+					</Card>
 			</div>
 
 			<section ref={plotPanelRef} className="card plot-panel" style={{ marginTop: 16 }}>
@@ -428,18 +429,18 @@ export function App(): ReactElement {
 						>
 							SVG出力
 						</Button>
-						<Button
-							variant="secondary"
-							onClick={exportInteractiveBundle}
-							disabled={!result || isRunning}
-						>
+							<Button
+								variant="secondary"
+								onClick={() => void exportInteractiveBundle()}
+								disabled={!result || isRunning}
+							>
 							HTML+JS出力
 						</Button>
-						<Button
-							variant="secondary"
-							onClick={exportSelfContainedHtml}
-							disabled={!result || isRunning}
-						>
+							<Button
+								variant="secondary"
+								onClick={() => void exportSelfContainedHtml()}
+								disabled={!result || isRunning}
+							>
 							JS同梱HTML出力
 						</Button>
 						<Button variant="secondary" onClick={exportCsvFile} disabled={!result || isRunning}>
@@ -619,4 +620,11 @@ export async function readFileContent(file: File): Promise<string> {
 		};
 		reader.readAsText(file);
 	});
+}
+
+/**
+ * 推奨kの表示値を整形する。
+ */
+function formatRecommendedK(k: number | null): string {
+	return k === null ? "算出不可" : String(k);
 }

@@ -37,7 +37,7 @@ export function runClusteringFromText(content: string, config: RunConfig): RunRe
 		nInit: 10,
 	});
 
-	const vizCoordinates = projectWithPca(matrixForClustering, config.vizDim);
+	const vizCoordinates = buildVisualizationCoordinates(matrixForClustering, config.vizDim);
 
 	const clusterLabels: Record<number, string> = {};
 	for (let clusterId = 0; clusterId < config.k; clusterId += 1) {
@@ -99,7 +99,7 @@ export async function runClusteringFromTextWithProgress(
 	await yieldToMainThread();
 
 	emitProgress(onProgress, 72, "可視化座標を計算しています");
-	const vizCoordinates = projectWithPca(matrixForClustering, config.vizDim);
+	const vizCoordinates = buildVisualizationCoordinates(matrixForClustering, config.vizDim);
 	await yieldToMainThread();
 
 	const clusterLabels: Record<number, string> = {};
@@ -157,5 +157,33 @@ function emitProgress(
 async function yieldToMainThread(): Promise<void> {
 	await new Promise<void>((resolve) => {
 		setTimeout(resolve, 0);
+	});
+}
+
+/**
+ * 可視化次元に合わせて座標行列を生成し、必要に応じて0埋めする。
+ */
+function buildVisualizationCoordinates(matrix: number[][], vizDim: 2 | 3): number[][] {
+	if (matrix.length === 0) {
+		return [];
+	}
+
+	const sourceDim = matrix[0]?.length ?? 0;
+	const projectionDim = Math.max(1, Math.min(vizDim, sourceDim));
+	const base =
+		sourceDim === projectionDim
+			? matrix.map((row) => row.slice(0, projectionDim))
+			: projectWithPca(matrix, projectionDim);
+
+	if (projectionDim === vizDim) {
+		return base;
+	}
+
+	return base.map((row) => {
+		const padded = row.slice();
+		while (padded.length < vizDim) {
+			padded.push(0);
+		}
+		return padded;
 	});
 }

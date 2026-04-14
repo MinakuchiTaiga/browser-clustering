@@ -43,6 +43,20 @@ describe("runClusteringFromText", () => {
 		expect(result.visualizedCoordinates[0]).toHaveLength(3);
 	});
 
+	it("特徴量が2次元でも3D可視化座標を0埋めで生成できる", () => {
+		const twoDimSource = ["id,f1,f2", "a,1,1", "b,1.2,1.1", "c,8,8", "d,8.2,8.1"].join("\n");
+		const result = runClusteringFromText(twoDimSource, {
+			k: 2,
+			seed: 42,
+			useStandardize: true,
+			usePcaBeforeClustering: false,
+			vizDim: 3,
+		});
+
+		expect(result.visualizedCoordinates[0]).toHaveLength(3);
+		expect(result.visualizedCoordinates.every((row) => row[2] === 0)).toBe(true);
+	});
+
 	it("進捗付き実行が100%で完了する", async () => {
 		const progresses: number[] = [];
 		await runClusteringFromTextWithProgress(

@@ -18,8 +18,8 @@ vi.mock("plotly.js-dist-min/plotly.min.js?raw", () => {
 import { buildSelfContainedHtmlContent } from "@/infra/plotlyClient";
 
 describe("buildSelfContainedHtmlContent", () => {
-	it("単一HTMLとして自己完結した内容を返す", () => {
-		const html = buildSelfContainedHtmlContent("test", [{ x: [1], y: [2], type: "scatter" }], {
+	it("単一HTMLとして自己完結した内容を返す", async () => {
+		const html = await buildSelfContainedHtmlContent("test", [{ x: [1], y: [2], type: "scatter" }], {
 			title: "test",
 		});
 

@@ -104,4 +104,21 @@ describe("App integration", () => {
 		await user.click(screen.getByRole("button", { name: "閉じる" }));
 		expect(screen.queryByRole("dialog", { name: "入力形式ガイド" })).not.toBeInTheDocument();
 	});
+
+	it("候補kを算出できないデータ件数では算出不可と表示する", async () => {
+		const user = userEvent.setup();
+		render(<App />);
+
+		const csv = ["id,f1,f2", "a,1,1", "b,2,2"].join("\n");
+		const input = screen.getByLabelText("CSV/TSVファイル") as HTMLInputElement;
+		const file = new File([csv], "small.csv", { type: "text/csv" });
+
+		await user.upload(input, file);
+		const kInput = screen.getByLabelText("クラスタ数 k");
+		await user.clear(kInput);
+		await user.type(kInput, "2");
+		await user.click(screen.getByRole("button", { name: "実行" }));
+
+		expect(await screen.findByText(/候補k（Elbow\/Silhouette）:/)).toHaveTextContent("算出不可");
+	});
 });

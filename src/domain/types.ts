@@ -74,8 +74,8 @@ export type ClusteringResult = {
 export type CandidateScores = {
 	elbow: Array<{ k: number; inertia: number }>;
 	silhouette: Array<{ k: number; score: number }>;
-	recommendedByElbow: number;
-	recommendedBySilhouette: number;
+	recommendedByElbow: number | null;
+	recommendedBySilhouette: number | null;
 };
 
 /**

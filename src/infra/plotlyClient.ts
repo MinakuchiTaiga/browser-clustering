@@ -1,8 +1,20 @@
-import Plotly from "plotly.js-dist-min";
-import plotlyBundleText from "plotly.js-dist-min/plotly.min.js?raw";
-
 export type PlotTrace = Record<string, unknown>;
 export type PlotLayout = Record<string, unknown>;
+type PlotlyClient = {
+	newPlot: (
+		element: HTMLDivElement,
+		traces: never,
+		layout: never,
+		config: { responsive: boolean; displaylogo: boolean },
+	) => Promise<void>;
+	toImage: (
+		element: HTMLDivElement,
+		options: { format: "png" | "svg"; width: number; height: number },
+	) => Promise<string>;
+};
+
+let plotlyClientPromise: Promise<PlotlyClient> | null = null;
+let plotlyBundlePromise: Promise<string> | null = null;
 
 /**
  * Plotlyでグラフを描画する。
@@ -12,7 +24,8 @@ export async function renderPlot(
 	traces: PlotTrace[],
 	layout: PlotLayout,
 ): Promise<void> {
-	await Plotly.newPlot(element, traces as never, layout as never, {
+	const plotly = await loadPlotlyClient();
+	await plotly.newPlot(element, traces as never, layout as never, {
 		responsive: true,
 		displaylogo: false,
 	});
@@ -25,7 +38,8 @@ export async function exportPlotAsImageDataUrl(
 	element: HTMLDivElement,
 	format: "png" | "svg",
 ): Promise<string> {
-	const dataUrl = await Plotly.toImage(element, {
+	const plotly = await loadPlotlyClient();
+	const dataUrl = await plotly.toImage(element, {
 		format,
 		width: 1280,
 		height: 800,
@@ -63,18 +77,24 @@ export function buildInteractiveScriptContent(traces: PlotTrace[], layout: PlotL
 /**
  * 同梱用Plotlyスクリプトを返す。
  */
-export function getPlotlyBundleContent(): string {
-	return plotlyBundleText;
+export async function getPlotlyBundleContent(): Promise<string> {
+	if (!plotlyBundlePromise) {
+		plotlyBundlePromise = import("plotly.js-dist-min/plotly.min.js?raw").then(
+			(module) => module.default,
+		);
+	}
+	return plotlyBundlePromise;
 }
 
 /**
  * Plotly本体を埋め込んだ単一HTML文字列を生成する。
  */
-export function buildSelfContainedHtmlContent(
+export async function buildSelfContainedHtmlContent(
 	title: string,
 	traces: PlotTrace[],
 	layout: PlotLayout,
-): string {
+): Promise<string> {
+	const plotlyBundleText = await getPlotlyBundleContent();
 	const renderScript = buildInteractiveScriptContent(traces, layout);
 	return `<!doctype html>
 <html lang="ja">
@@ -109,4 +129,14 @@ export function escapeHtml(value: string): string {
  */
 function escapeScriptTag(value: string): string {
 	return value.replaceAll("</script>", "<\\/script>");
+}
+
+/**
+ * Plotlyクライアントを遅延読み込みで取得する。
+ */
+async function loadPlotlyClient(): Promise<PlotlyClient> {
+	if (!plotlyClientPromise) {
+		plotlyClientPromise = import("plotly.js-dist-min").then((module) => module.default as PlotlyClient);
+	}
+	return plotlyClientPromise;
 }

@@ -21,7 +21,8 @@ export function parseDelimitedText(content: string): ParseResult {
 
 	const delimiter = detectDelimiter(lines);
 	const firstTokens = splitLine(lines[0], delimiter);
-	const hasHeader = detectHeader(firstTokens);
+	const secondTokens = lines[1] ? splitLine(lines[1], delimiter) : null;
+	const hasHeader = detectHeader(firstTokens, secondTokens);
 	const headers = hasHeader
 		? normalizeHeaders(firstTokens)
 		: createDefaultHeaders(firstTokens.length);
@@ -107,17 +108,66 @@ export function detectDelimiter(lines: string[]): Delimiter {
  * 1行のテキストを区切り文字で分割する。
  */
 export function splitLine(line: string, delimiter: Delimiter): string[] {
-	return line.split(delimiter).map((cell) => cell.trim());
+	const cells: string[] = [];
+	let current = "";
+	let insideQuote = false;
+
+	for (let i = 0; i < line.length; i += 1) {
+		const char = line[i];
+		if (char === '"') {
+			if (insideQuote && line[i + 1] === '"') {
+				current += '"';
+				i += 1;
+				continue;
+			}
+			insideQuote = !insideQuote;
+			continue;
+		}
+		if (!insideQuote && char === delimiter) {
+			cells.push(current.trim());
+			current = "";
+			continue;
+		}
+		current += char;
+	}
+
+	cells.push(current.trim());
+	return cells;
 }
 
 /**
  * 先頭行がヘッダーかどうかを判定する。
  */
-export function detectHeader(tokens: string[]): boolean {
+export function detectHeader(tokens: string[], nextTokens?: string[] | null): boolean {
 	if (tokens.length < 2) {
 		return false;
 	}
-	return tokens.slice(1).some((token) => Number.isNaN(Number(token.trim())));
+
+	const labelHeaderCandidates = new Set([
+		"id",
+		"ID",
+		"Id",
+		"label",
+		"LABEL",
+		"Label",
+		"name",
+		"NAME",
+		"Name",
+		"名称",
+	]);
+	if (labelHeaderCandidates.has(tokens[0]?.trim() ?? "")) {
+		return true;
+	}
+
+	if (tokens.slice(1).some((token) => Number.isNaN(Number(token.trim())))) {
+		return true;
+	}
+
+	if (!nextTokens || nextTokens.length !== tokens.length) {
+		return false;
+	}
+
+	return false;
 }
 
 /**
