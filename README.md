@@ -25,6 +25,27 @@ pnpm build
 pnpm audit:offline
 ```
 
+## デプロイ
+
+### Cloudflare Pages
+
+- 既定のビルドで動作（`BASE_PATH` 未指定、`/` 配信）
+- Build command: `pnpm build`
+- Output directory: `dist`
+
+### GitHub Pages
+
+- `.github/workflows/deploy-pages.yml` で `main` push 時に自動デプロイ
+- GitHub側設定: `Settings > Pages > Build and deployment > Source = GitHub Actions`
+- ワークフロー内で `BASE_PATH=/<repository-name>/` を注入してビルド
+
+ローカルでGitHub Pages相当の成果物を確認する場合:
+
+```bash
+BASE_PATH="/browser-clustering/" pnpm build
+pnpm preview
+```
+
 ## 入力仕様
 
 - 受け付け: `CSV`, `TSV`
